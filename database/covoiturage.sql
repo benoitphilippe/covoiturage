@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Mar 26, 2017 at 05:22 
+-- Generation Time: Mar 29, 2017 at 11:21 
 -- Server version: 10.1.21-MariaDB
 -- PHP Version: 7.0.15
 
@@ -52804,7 +52804,8 @@ CREATE TABLE `Trajet` (
   `nb_places` tinyint(5) NOT NULL,
   `id_driver` int(11) NOT NULL,
   `departure-city` int(11) NOT NULL,
-  `arrival_city` int(11) NOT NULL
+  `arrival_city` int(11) NOT NULL,
+  `canceled` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -52817,12 +52818,28 @@ CREATE TABLE `User` (
   `id` int(11) NOT NULL COMMENT 'Id ',
   `email` varchar(45) DEFAULT NULL,
   `age` tinyint(3) DEFAULT NULL,
-  `fisrt_name` varchar(45) DEFAULT NULL,
-  `lastName` varchar(45) DEFAULT NULL,
+  `first_name` varchar(45) DEFAULT NULL,
+  `last_name` varchar(45) DEFAULT NULL,
   `pseudo` varchar(45) NOT NULL,
   `password` char(64) NOT NULL COMMENT 'please use sha256 encryption algorythme',
-  `isAdmin` tinyint(1) NOT NULL
+  `is_admin` tinyint(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `User`
+--
+
+INSERT INTO `User` (`id`, `email`, `age`, `first_name`, `last_name`, `pseudo`, `password`, `is_admin`) VALUES
+(2, NULL, NULL, NULL, NULL, 'bphilippe', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 0),
+(5, NULL, NULL, NULL, NULL, 'benoit', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 0),
+(6, NULL, NULL, NULL, NULL, 'antoine', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 0),
+(7, NULL, NULL, NULL, NULL, 'benoit2', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 0),
+(8, NULL, NULL, NULL, NULL, 'benoit3', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 0),
+(9, NULL, NULL, NULL, NULL, 'benoit4', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 0),
+(10, NULL, NULL, NULL, NULL, 'drop table', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 0),
+(11, NULL, NULL, NULL, NULL, 'drop table User', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 0),
+(12, 'null', 0, 'null', 'null', 'benoit10', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 0),
+(13, NULL, NULL, NULL, NULL, 'benoit11', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 0);
 
 --
 -- Indexes for dumped tables
@@ -52868,7 +52885,8 @@ ALTER TABLE `Trajet`
 ALTER TABLE `User`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `id_UNIQUE` (`id`),
-  ADD KEY `identity` (`lastName`,`fisrt_name`) USING BTREE;
+  ADD UNIQUE KEY `pseudo` (`pseudo`),
+  ADD KEY `identity` (`last_name`,`first_name`) USING BTREE;
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -52898,7 +52916,7 @@ ALTER TABLE `Trajet`
 -- AUTO_INCREMENT for table `User`
 --
 ALTER TABLE `User`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Id ';
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Id ', AUTO_INCREMENT=14;
 --
 -- Constraints for dumped tables
 --
