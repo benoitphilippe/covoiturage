@@ -1,5 +1,20 @@
 <?php 
 
+
+/*
+    Exemple d'utilisation des fonctions de connection
+    Création d'un nouveau compte utilisateur :
+
+    $user = User::sign_up(pseudo, password[, is_admin = 0, email=null, first_name=null, last_name=null, age=null ]);
+
+    Récupération d'un compte existant:
+
+    $user = User::sign_in(pseudo, password);
+
+    on peut égalment gérer les exceptions levées en cas de pseudo existants ou d'erreur de mot de passe.
+
+*/
+
 include_once "database.php"; // get database object
 
 class PseudoNotFoundException extends Exception {}
@@ -42,7 +57,7 @@ class User {
     * @return User 
     * @throws PseudoAlreadyExistsException
     */ 
-    public static function sign_up( $pseudo, $password, $is_admin = 0, $email='null', $first_name='null', $last_name='null', $age='null'){
+    public static function sign_up( $pseudo, $password, $is_admin = 0, $email=null, $first_name=null, $last_name=null, $age=null){
         // hash password 
         $hashed_password = hash("sha256", $password);
 
@@ -168,6 +183,4 @@ class User {
         $this->email = $email;
     }
 }
-
-
 ?>
