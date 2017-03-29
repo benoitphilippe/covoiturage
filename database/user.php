@@ -2,24 +2,13 @@
 
 include_once "database.php"; // get database object
 
-class TableRows extends RecursiveIteratorIterator {
-    function __construct($it) {
-        parent::__construct($it, self::LEAVES_ONLY);
-    }
+class PseudoNotFoudException extends Exception {}
+class PasswordNotMatchException extends Exception {}
+class PseudoAlreadyExistsException extends Exception {}
 
-    function current() {
-        return "<td style='width:150px;border:1px solid black;'>" . parent::current(). "</td>";
-    }
-
-    function beginChildren() {
-        echo "<tr>";
-    }
-
-    function endChildren() {
-        echo "</tr>" . "\n";
-    }
-} 
-
+/**
+* Interface for table user for database
+*/
 class User {
     
     /**
@@ -31,49 +20,68 @@ class User {
     private $first_name;
     private $last_name;
     private $pseudo;
-    private $password;
+    // private $password; not for server
     private $is_admin;
 
     //constructor
-    private function __construct($id, $pseudo, $password, $is_admin = False, $email=null, $first_name=null, $last_name=null){
-        $this->$id = $id;
-        $this->$email = $email;
-        $this->password= $password;
-        $this->is_admin= $is_admin;
+    public function __construct($id, $pseudo, /*$password,*/ $is_admin = False, $email=null, $first_name=null, $last_name=null, $age=null){
+        $this->id = $id;
+        $this->pseudo = $pseudo;
         $this->email = $email;
+        // $this->password= $password; only present in database, server doesn't not have to know about it
+        $this->is_admin= $is_admin;
         $this->first_name = $first_name;
         $this->last_name = $last_name;
+        $this->age = $age;
     }
 
     /**
     * sign up method 
     * add new user to database
-    * @param all nedded to __constructor except idate
-    * @return User object or null if fail
+    * @param all nedded to __constructor excepted id
+    * @return User 
+    * @throws PseudoAlreadyExistsException
     */ 
-    public static function sign_up( $pseudo, $password, $is_admin = 0, $email='null', $first_name='null', $last_name='null'){
+    public static function sign_up( $pseudo, $password, $is_admin = 0, $email='null', $first_name='null', $last_name='null', $age='null'){
         // hash password 
         $hashed_password = hash("sha256", $password);
+
+        // check for pseudo in database
+        try {
+            // connect to database
+            $database = new Database();
+            $sql = "SELECT * FROM User WHERE (pseudo = '$pseudo')";
+            if($database->getLink()->query($sql)->rowCount() > 0){
+                // pseudo already exists, throw exception
+                throw new PseudoAlreadyExistsException("$pseudo already exists, try another pseudo");
+            }
+        }
+        catch(PDOException $e){
+            print("failed to check pseudo  : " . $e->getMessage());
+            die();
+        }
+
         // try to save it on database
         try {
             // connect to database
             $database = new Database();
-            $sql = "INSERT INTO User (pseudo, password, is_admin, email, first_name, last_name) VALUES ('$pseudo', '$hashed_password', $is_admin, $email, $first_name, $last_name)";
+            $sql = "INSERT INTO User (pseudo, password, is_admin, email, first_name, last_name, age) VALUES ('$pseudo', '$hashed_password', $is_admin, $email, $first_name, $last_name, $age)";
             $database->getLink()->exec($sql);
         }
         catch(PDOException $e){
             print("failed to sign up  : " . $e->getMessage());
-            return null;
+            die();
         }
-        //return User::sign_in($pseudo, $password);
-        return 'hey';
+        return User::sign_in($pseudo, $password);
     }
 
     /**
     * return the first user idetified by his pseudo and his password
     * @param pseudo string
     * @param password string not hashed
-    * @return User | null
+    * @return User
+    * @throws PasswordNotMatchException
+    * @throws PseudoNotFoundException
     */
     static public function sign_in($pseudo, $password){
         // first, we hash the password
@@ -82,21 +90,71 @@ class User {
         try {
             // connect to database
             $database = new Database();
-            $sql = "SELECT * FROM User WHERE ('pseudo' = '$pseudo')";
-            print($sql);
-            $stmt = $database->getLink()->prepare($sql);
-            $stmt->execute();
-            $result = $stmt->setFetchMode(PDO::FETCH_ASSOC);
-            foreach($stmt->fetchAll() as $k=>$v) {
-                print ("$k->$v");
+            $sql = "SELECT * FROM User WHERE (pseudo = '$pseudo')";
+            // we should have only one row for this request
+            foreach($database->getLink()->query($sql) as $row) {
+                // check for password 
+                if(strcmp($hashed_password, $row["password"]) == 0){
+                    print($row["email"]);
+                    // password is the same
+                    // create new user object and return it
+                    return new User($row["id"], $row["pseudo"], /*$row["password"],*/ $row["is_admin"], $row["email"], $row["first_name"], $row["last_name"], $row["age"]);
+                }
+                else {
+                    // password is not the same, raise an Exception for this
+                    throw new PasswordNotMatchException("Password not match for $pseudo account.");
+                }
             }
+            // cannot find Pseudo
+            throw new PseudoNotFoundException("$pseudo is not valid account's pseudo");
         }
         catch(PDOException $e){
             print("failed to sign in  : " . $e->getMessage());
-            return null;
+            die();
         }
+    }
+
+    // getters
+    public function get_id(){
+        return $this->id;
+    }
+     public function get_pseudo(){
+        return $this->pseudo;
+    }
+     public function get_is_admin(){
+        return $this->is_admin;
+    }
+     public function get_age(){
+        return $this->age;
+    }
+     public function get_first_name(){
+        return $this->first_name;
+    }
+     public function get_last_name(){
+        return $this->last_name;
+    }
+    public function get_email(){
+        return $this->email;
+    }
+
+    // setters
+     public function set_is_admin($is_admin){
+        $this->is_admin = $is_admin;
+    }
+     public function set_age($age){
+        $this->age = $age;
+    }
+     public function set_first_name($name){
+        $this->first_name = $name;
+    }
+     public function set_last_name($name){
+        $this->last_name = $name;
+    }
+    public function set_email($email){
+        $this->email = $email;
     }
 }
 
-User::sign_in('bphilippe', 'password');
+// $user = User::sign_up('benoit3', 'password');
+// print($user->get_id());
 ?>
