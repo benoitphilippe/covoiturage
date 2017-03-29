@@ -2,7 +2,7 @@
 
 include_once "database.php"; // get database object
 
-class PseudoNotFoudException extends Exception {}
+class PseudoNotFoundException extends Exception {}
 class PasswordNotMatchException extends Exception {}
 class PseudoAlreadyExistsException extends Exception {}
 
@@ -24,7 +24,7 @@ class User {
     private $is_admin;
 
     //constructor
-    public function __construct($id, $pseudo, /*$password,*/ $is_admin = False, $email=null, $first_name=null, $last_name=null, $age=null){
+    private function __construct($id, $pseudo, /*$password,*/ $is_admin = False, $email=null, $first_name=null, $last_name=null, $age=null){
         $this->id = $id;
         $this->pseudo = $pseudo;
         $this->email = $email;
@@ -65,8 +65,19 @@ class User {
         try {
             // connect to database
             $database = new Database();
-            $sql = "INSERT INTO User (pseudo, password, is_admin, email, first_name, last_name, age) VALUES ('$pseudo', '$hashed_password', $is_admin, $email, $first_name, $last_name, $age)";
-            $database->getLink()->exec($sql);
+            $sql = "INSERT INTO User (pseudo, password, is_admin, email, first_name, last_name, age) 
+            VALUES ( :pseudo, :hashed_password, :is_admin, :email, :first_name, :last_name, :age)";
+            $statement = $database->getLink()->prepare($sql);
+            $statement->execute(array(
+                ':pseudo' => $pseudo,
+                ':hashed_password' => $hashed_password,
+                ':is_admin' => $is_admin,
+                ':first_name' => $first_name,
+                ':last_name' => $last_name,
+                ':age' => $age,
+                ':email' => $email
+            ));
+
         }
         catch(PDOException $e){
             print("failed to sign up  : " . $e->getMessage());
@@ -90,12 +101,15 @@ class User {
         try {
             // connect to database
             $database = new Database();
-            $sql = "SELECT * FROM User WHERE (pseudo = '$pseudo')";
+            $sql = "SELECT * FROM User WHERE (pseudo = :pseudo)";
+            //$sql = "SELECT * FROM User WHERE (pseudo = '$pseudo')";
             // we should have only one row for this request
-            foreach($database->getLink()->query($sql) as $row) {
+            $statement = $database->getLink()->prepare($sql);
+            $statement->execute(array(':pseudo'=>$pseudo));
+            $result = $statement->fetchAll();
+            foreach($result as $row) {
                 // check for password 
                 if(strcmp($hashed_password, $row["password"]) == 0){
-                    print($row["email"]);
                     // password is the same
                     // create new user object and return it
                     return new User($row["id"], $row["pseudo"], /*$row["password"],*/ $row["is_admin"], $row["email"], $row["first_name"], $row["last_name"], $row["age"]);
@@ -155,6 +169,5 @@ class User {
     }
 }
 
-// $user = User::sign_up('benoit3', 'password');
-// print($user->get_id());
+
 ?>
