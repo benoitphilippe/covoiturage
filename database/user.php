@@ -11,10 +11,15 @@
 
     on peut égalment gérer les exceptions levées en cas de pseudo existants ou d'erreur de mot de passe.
 
+    un utilisateur peut poster un trajet par :
+    $user->postTrajet($price, $departure_date, $nb_places, $departure_city, $arrival_city);
+
 */
 
 include_once "database.php"; // get database object
+include_once "trajet.php"; // post trajet
 
+// Exceptions to handle
 class PseudoNotFoundException extends Exception {}
 class PasswordNotMatchException extends Exception {}
 class PseudoAlreadyExistsException extends Exception {}
@@ -139,6 +144,30 @@ class User {
             print("failed to sign in  : " . $e->getMessage());
             die();
         }
+    }
+
+    /**
+    * User post a trajet
+    * @return posted trajet
+    */
+    public function postTrajet($price, $departure_date, $nb_places, $departure_city, $arrival_city){
+        return Trajet::addTrajet($price, $departure_date, $nb_places, $this->id, $departure_city, $arrival_city);
+    }
+
+    /**
+    * User set hismself as a passenger
+    * @param $idTrajet int id of Trajet
+    */
+    public function setAsPassengerForTrajet($idTrajet){
+        Passenger_for::addPassenger($this->id, $idTrajet);
+    }
+
+    /**
+    * Cancel a trip as passenger 
+    * @param $idTrajet int id of Trajet
+    */
+    public function CancelTripAsPassenger($idTrajet){
+        Passenger_for::removePassenger($this->id, $idTrajet);
     }
 
     // getters

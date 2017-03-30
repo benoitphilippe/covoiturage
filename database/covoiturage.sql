@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Mar 29, 2017 at 11:21 
+-- Generation Time: Mar 30, 2017 at 12:21 
 -- Server version: 10.1.21-MariaDB
 -- PHP Version: 7.0.15
 
@@ -52800,10 +52800,10 @@ INSERT INTO `states` (`id`, `name`, `country_id`) VALUES
 CREATE TABLE `Trajet` (
   `idTrajet` int(11) NOT NULL,
   `price` decimal(2,0) NOT NULL,
-  `departure_date` date NOT NULL,
+  `departure_date` datetime NOT NULL,
   `nb_places` tinyint(5) NOT NULL,
   `id_driver` int(11) NOT NULL,
-  `departure-city` int(11) NOT NULL,
+  `departure_city` int(11) NOT NULL,
   `arrival_city` int(11) NOT NULL,
   `canceled` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -52876,7 +52876,7 @@ ALTER TABLE `states`
 ALTER TABLE `Trajet`
   ADD PRIMARY KEY (`idTrajet`),
   ADD KEY `driver` (`id_driver`),
-  ADD KEY `departure` (`departure-city`),
+  ADD KEY `departure` (`departure_city`),
   ADD KEY `arrival` (`arrival_city`);
 
 --
@@ -52933,7 +52933,7 @@ ALTER TABLE `Passenger_for`
 --
 ALTER TABLE `Trajet`
   ADD CONSTRAINT `arrival` FOREIGN KEY (`arrival_city`) REFERENCES `cities` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `departure` FOREIGN KEY (`departure-city`) REFERENCES `cities` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `departure` FOREIGN KEY (`departure_city`) REFERENCES `cities` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `driver` FOREIGN KEY (`id_driver`) REFERENCES `User` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
