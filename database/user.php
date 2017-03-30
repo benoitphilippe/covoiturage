@@ -54,6 +54,32 @@ class User {
     }
 
     /**
+    * return an object User by giving an Id
+    * @param $id : int id of user
+    * @return User | null
+    */
+    public static function getUserById($id){
+        try {
+            // connect to database
+            $database = new Database();
+            $sql = "SELECT * FROM User WHERE (id = :id)";
+            // we should have only one row for this request
+            $statement = $database->getLink()->prepare($sql);
+            $statement->execute(array(':id'=>$id));
+            $result = $statement->fetchAll();
+            foreach($result as $row) {
+                return new User($row["id"], $row["pseudo"], /*$row["password"],*/ $row["is_admin"], $row["email"], $row["first_name"], $row["last_name"], $row["age"]);
+            }
+            // no user was found 
+            return null;
+        }
+        catch(PDOException $e){
+            print("failed to sign in  : " . $e->getMessage());
+            die();
+        }
+    }
+
+    /**
     * sign up method 
     * add new user to database
     * @param all nedded to __constructor excepted id
@@ -153,6 +179,57 @@ class User {
     public function postTrajet($price, $departure_date, $nb_places, $departure_city, $arrival_city){
         return Trajet::addTrajet($price, $departure_date, $nb_places, $this->id, $departure_city, $arrival_city);
     }
+
+    /**
+    * Get all trajet posted as driver
+    * @return int[] : list of trajet id as driver
+    */
+    public function listTrajetAsDriver(){
+        $list = array();
+        try {
+            // connect to database
+            $database = new Database();
+            $sql = "SELECT idTrajet FROM `Trajet` WHERE (id_driver = :id)";
+            // we should have only one row for this request
+            $statement = $database->getLink()->prepare($sql);
+            $statement->execute(array(':id'=>$this->id));
+            $result = $statement->fetchAll();
+            foreach($result as $row) {
+                $list[] = intval($row["idTrajet"]);
+            }
+            return $list;
+        }
+        catch(PDOException $e){
+            print("failed to get Trajet as driver : " . $e->getMessage());
+            die();
+        }
+    }
+
+    /**
+    * Get all trajet booked as passenger
+    * @return int[] : list of trajet id as passenger
+    */
+    public function listTrajetAsPassenger(){
+        $list = array();
+        try {
+            // connect to database
+            $database = new Database();
+            $sql = "SELECT Trajet FROM `Passenger_for` WHERE (passenger_id = :id)";
+            // we should have only one row for this request
+            $statement = $database->getLink()->prepare($sql);
+            $statement->execute(array(':id'=>$this->id));
+            $result = $statement->fetchAll();
+            foreach($result as $row) {
+                $list[] = intval($row["Trajet"]);
+            }
+            return $list;
+        }
+        catch(PDOException $e){
+            print("failed to get Trajet as Passenger  : " . $e->getMessage());
+            die();
+        }
+    }
+
 
     /**
     * User set hismself as a passenger

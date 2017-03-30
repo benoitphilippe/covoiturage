@@ -2,6 +2,9 @@
 
 include_once "database.php";
 
+// Exceptions to handle
+class NoPlacesLeftException extends Exception {}
+
 class Passenger_for{
 
     private $passenger_id;
@@ -15,11 +18,16 @@ class Passenger_for{
     /**
     * Add new Trajet on database, return Trajet created
     * @param $passenger_id int
-    * @param $Trajet 
+    * @param $Trajet
+    * @throws NoPlacesLeftException
     */
     public static function addPassenger($passenger_id, $Trajet){
-        // TODO : check for places in Trajet
-        // {}
+        // check for places in Trajet
+
+        $trajet = Trajet::getTrajetById($Trajet);
+        if($trajet->countNbPlacesLeft() <= 0){
+            throw new NoPlacesLeftException('No places left for Trajet ');
+        }
 
         // try to save it on database
         try {

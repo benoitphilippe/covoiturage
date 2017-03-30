@@ -1,6 +1,7 @@
 <?php 
 
 include_once "database.php";
+include_once "passenger_for.php";
 
 class Trajet {
     private $id;
@@ -21,6 +22,87 @@ class Trajet {
         $this->departure_city = $departure_city;
         $this->arrival_city = $arrival_city;
         $this->canceled = $canceled;
+    }
+    /**
+    * return number places left for this Trajet
+    * @return int
+    */
+    public function countNbPlacesLeft(){
+        try {
+            // connect to database
+            $database = new Database();
+            $sql = "SELECT COUNT(`Trajet`) FROM `Passenger_for` WHERE (Trajet = :id)";
+            // we should have only one row for this request
+            $statement = $database->getLink()->prepare($sql);
+            $statement->execute(array(':id'=>$this->id));
+            $result = $statement->fetchAll();
+            foreach($result as $row) {
+                return $this->nb_places - $row["COUNT(`Trajet`)"];
+            }
+            return null;
+        }
+        catch(PDOException $e){
+            print("failed to get number places left  : " . $e->getMessage());
+            die();
+        }
+    }
+    /**
+    * Search Trajets by giving departure date, deaprture city, and arrival city
+    * Ex : Trajet::search(date("Y-m-d H:i:s" , mktime(0,0,0,5,10,1995)["1995-05-10 00:00:00"]), 10 [Akividu], 12[]);
+    * @param $departure_date : string format datetime sql like "y-m-d H:i:s". Everything that is after this date will be catch. 
+    * @param $departure_city : int id of city
+    * @param $arrival_city : int id of city
+    * @return Trajet[] : list of Trajet matching this search
+    */
+    public static function search($departure_date, $departure_city, $arrival_city){
+        $list = array();
+        try {
+            // connect to database
+            $database = new Database();
+            $sql = "SELECT * FROM `Trajet` WHERE (departure_date > :date AND departure_city = :departure_city AND arrival_city = :arrival_city)";
+            // we should have only one row for this request
+            $statement = $database->getLink()->prepare($sql);
+            $statement->execute(array(
+                ':date'=>$departure_date,
+                ':departure_city'=>$departure_city,
+                ':arrival_city'=>$arrival_city
+                ));
+            $result = $statement->fetchAll();
+            foreach($result as $row) {
+                $list[] = new Trajet($row["idTrajet"], $row["price"], $row["departure_date"], $row["nb_places"], $row["id_driver"], $row["departure_city"], $row["arrival_city"], $row["canceled"]);
+            }
+            return $list;
+        }
+        catch(PDOException $e){
+            print("failed to search trajet : " . $e->getMessage());
+            die();
+        }
+    }
+
+    /**
+    * Get Trajet object by Id 
+    * @param $id : int Trajet id 
+    * @return Trajet | null
+    */
+    public static function getTrajetById($id){
+        try {
+            // connect to database
+            $database = new Database();
+            $sql = "SELECT * FROM Trajet WHERE (idTrajet = :id)";
+            // we should have only one row for this request
+            $statement = $database->getLink()->prepare($sql);
+            $statement->execute(array(':id'=>$id));
+            $result = $statement->fetchAll();
+            foreach($result as $row) {
+                return new Trajet($row["idTrajet"], $row["price"], $row["departure_date"], $row["nb_places"], $row["id_driver"], $row["departure_city"], $row["arrival_city"], $row["canceled"]);
+            }
+            // no trajet was found 
+            return null;
+        }
+        catch(PDOException $e){
+            print("failed to get Trajet by id  : " . $e->getMessage());
+            die();
+        }
     }
 
     /**
@@ -56,7 +138,7 @@ class Trajet {
             $statement->execute(array(":id" => $this->id));
         }
         catch(PDOException $e){
-            print("failed to uncancel a trajet new trajet  : " . $e->getMessage());
+            print("failed to uncancel a trajet: " . $e->getMessage());
             die();
         }
         // success, chande it on object 
@@ -119,10 +201,40 @@ class Trajet {
             return new Trajet($id, $price, $departure_date, $nb_places, $id_driver, $departure_city, $arrival_city, 0);
         }
         catch(PDOException $e){
-            print("failed to search city  : " . $e->getMessage());
+            print("failed to get Trajet id : " . $e->getMessage());
             die();
         }
         return null; // problem 
+    }
+    /**
+    * @return int[] : list of the passengers' ids
+    */
+    public function listPassengers(){
+        $list = array();
+        try {
+            // connect to database
+            $database = new Database();
+            $sql = "SELECT passenger_id FROM `Passenger_for` WHERE (Trajet = :id)";
+            // we should have only one row for this request
+            $statement = $database->getLink()->prepare($sql);
+            $statement->execute(array(':id'=>$this->id));
+            $result = $statement->fetchAll();
+            foreach($result as $row) {
+                $list[] = intval($row["passenger_id"]);
+            }
+            return $list;
+        }
+        catch(PDOException $e){
+            print("failed to list passenger  : " . $e->getMessage());
+            die();
+        }
+    }
+
+    /**
+    * @return the User id of the driver
+    */
+    public function getDriver(){
+        return $this->id_driver;
     }
 }
 
